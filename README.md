@@ -24,3 +24,7 @@ An advanced and responsive web application that allows users to apply real-time 
 - HTML5
 - CSS3
 - JavaScript (Vanilla)
+
+## Live Demo
+
+[**Click here to view the live app**](https://image-filtering-app.netlify.app/)
