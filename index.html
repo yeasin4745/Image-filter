@@ -1,59 +1,844 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Image filter</title>
-    
-    <!-- css file -->
-    <link rel="stylesheet" href="style.css" type="text/css" media="all" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Image Filter Editor</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1f2937;
+            --light: #f8fafc;
+            --border: #e5e7eb;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .app-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .app-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background: var(--dark);
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 0;
+            min-height: 600px;
+        }
+
+        .image-area {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #fafafa;
+        }
+
+        .image-container {
+            position: relative;
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            background: white;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 500px;
+            display: block;
+            transition: filter 0.1s ease;
+        }
+
+        .image-placeholder {
+            width: 400px;
+            height: 300px;
+            border: 3px dashed var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-size: 1.1rem;
+        }
+
+        .image-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            min-width: 300px;
+        }
+
+        .controls-panel {
+            background: white;
+            border-left: 1px solid var(--border);
+            padding: 30px;
+            overflow-y: auto;
+            max-height: 600px;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group h3 {
+            color: var(--dark);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+
+        .control-item {
+            margin-bottom: 20px;
+        }
+
+        .control-item label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .value-display {
+            background: var(--light);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            min-width: 45px;
+            text-align: center;
+        }
+
+        .control-item input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+            appearance: none;
+        }
+
+        .control-item input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .preset-filters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .preset-btn {
+            padding: 8px 12px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--primary);
+            background: var(--light);
+        }
+
+        .history-panel {
+            margin-top: 20px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin: 5px 0;
+            background: var(--light);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .history-item:hover {
+            background: var(--border);
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls-panel {
+                border-left: none;
+                border-top: 1px solid var(--border);
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .toolbar {
+                justify-content: center;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            
+            .app-header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </head>
-
 <body>
+    <div class="app-header">
+        <h1>Advanced Image Filter Editor</h1>
+        <p>Professional image editing with real-time filters and presets</p>
+    </div>
+
     <div class="container">
-    <div class="image-preview">
-      <img id="image" src="https://www.facebook.com/share/p/1Y3r1sECPP/" alt="Upload Image" />
-    </div><div class="controls">
-  <label>Blur</label>
-  <input type="range" name="blur" min="0" max="10" step="0.1" value="0" oninput="updateFilter(this)" />
+        <div class="toolbar">
+            <div class="file-input-wrapper">
+                <input type="file" id="imageInput" accept="image/*" multiple>
+                <label for="imageInput" class="btn btn-primary">📁 Upload Images</label>
+            </div>
+            <button class="btn btn-success" onclick="downloadImage('png')">💾 Download PNG</button>
+            <button class="btn btn-success" onclick="downloadImage('jpeg')">💾 Download JPEG</button>
+            <button class="btn btn-warning" onclick="savePreset()">⭐ Save Preset</button>
+            <button class="btn btn-danger" onclick="resetFilters()">🔄 Reset All</button>
+            <button class="btn btn-primary" onclick="toggleComparison()">👁️ Compare</button>
+        </div>
 
-  <label>Brightness</label>
-  <input type="range" name="bright" min="0" max="2" step="0.01" value="1" oninput="updateFilter(this)" />
+        <div class="main-content">
+            <div class="image-area">
+                <div class="image-container" id="imageContainer">
+                    <img id="mainImage" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='100%25' height='100%25' fill='%23f8fafc'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%239ca3af' font-size='18'%3EUpload an image to start editing%3C/text%3E%3C/svg%3E" alt="Upload Image">
+                </div>
+                
+                <div class="image-info" id="imageInfo">
+                    <div><strong>Dimensions:</strong> <span id="imageDimensions">-</span></div>
+                    <div><strong>File Size:</strong> <span id="imageSize">-</span></div>
+                    <div><strong>Format:</strong> <span id="imageFormat">-</span></div>
+                </div>
 
-  <label>Contrast</label>
-  <input type="range" name="contrast" min="0" max="2" step="0.01" value="1" oninput="updateFilter(this)" />
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
 
-  <label>Grayscale</label>
-  <input type="range" name="grayscale" min="0" max="1" step="0.01" value="0" oninput="updateFilter(this)" />
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>Quick Presets</h3>
+                    <div class="preset-filters">
+                        <button class="preset-btn" onclick="applyPreset('vintage')">Vintage</button>
+                        <button class="preset-btn" onclick="applyPreset('noir')">Film Noir</button>
+                        <button class="preset-btn" onclick="applyPreset('warm')">Warm</button>
+                        <button class="preset-btn" onclick="applyPreset('cool')">Cool</button>
+                        <button class="preset-btn" onclick="applyPreset('dramatic')">Dramatic</button>
+                        <button class="preset-btn" onclick="applyPreset('soft')">Soft</button>
+                    </div>
+                </div>
 
-  <label>Hue Rotate</label>
-  <input type="range" name="hue" min="0" max="360" step="1" value="0" oninput="updateFilter(this)" />
+                <div class="control-group">
+                    <h3>Basic Adjustments</h3>
+                    
+                    <div class="control-item">
+                        <label>
+                            Brightness
+                            <span class="value-display" id="brightValue">100%</span>
+                        </label>
+                        <input type="range" name="brightness" min="0" max="200" value="100" 
+                               oninput="updateFilter(this, '%')">
+                    </div>
 
-  <label>Invert</label>
-  <input type="range" name="invert" min="0" max="1" step="0.01" value="0" oninput="updateFilter(this)" />
+                    <div class="control-item">
+                        <label>
+                            Contrast
+                            <span class="value-display" id="contrastValue">100%</span>
+                        </label>
+                        <input type="range" name="contrast" min="0" max="200" value="100" 
+                               oninput="updateFilter(this, '%')">
+                    </div>
 
-  <label>Opacity</label>
-  <input type="range" name="opacity" min="0" max="1" step="0.01" value="1" oninput="updateFilter(this)" />
+                    <div class="control-item">
+                        <label>
+                            Saturation
+                            <span class="value-display" id="saturateValue">100%</span>
+                        </label>
+                        <input type="range" name="saturate" min="0" max="300" value="100" 
+                               oninput="updateFilter(this, '%')">
+                    </div>
 
-  <label>Saturate</label>
-  <input type="range" name="saturate" min="0" max="3" step="0.01" value="1" oninput="updateFilter(this)" />
+                    <div class="control-item">
+                        <label>
+                            Exposure
+                            <span class="value-display" id="exposureValue">0</span>
+                        </label>
+                        <input type="range" name="exposure" min="-100" max="100" value="0" 
+                               oninput="updateFilter(this, '')">
+                    </div>
+                </div>
 
-  <label>Sepia</label>
-  <input type="range" name="sepia" min="0" max="1" step="0.01" value="0" oninput="updateFilter(this)" />
-</div>
+                <div class="control-group">
+                    <h3>Color & Effects</h3>
+                    
+                    <div class="control-item">
+                        <label>
+                            Hue Shift
+                            <span class="value-display" id="hueValue">0°</span>
+                        </label>
+                        <input type="range" name="hue" min="0" max="360" value="0" 
+                               oninput="updateFilter(this, '°')">
+                    </div>
 
-<div class="actions">
-  <input type="file" accept="image/*" onchange="uploadImage(event)" />
-  <button onclick="downloadImage('png')">Download PNG</button>
-  <button onclick="downloadImage('jpeg')">Download JPEG</button>
-  <button class="reset" onclick="resetFilters()">Reset Filters</button>
-</div>
+                    <div class="control-item">
+                        <label>
+                            Temperature
+                            <span class="value-display" id="temperatureValue">0</span>
+                        </label>
+                        <input type="range" name="temperature" min="-100" max="100" value="0" 
+                               oninput="updateFilter(this, '')">
+                    </div>
 
-  </div> 
-  
-  <!-- JavaScript file-->
-    <script src="app.js" type="text/javascript" charset="utf-8"></script>
+                    <div class="control-item">
+                        <label>
+                            Tint
+                            <span class="value-display" id="tintValue">0</span>
+                        </label>
+                        <input type="range" name="tint" min="-100" max="100" value="0" 
+                               oninput="updateFilter(this, '')">
+                    </div>
+
+                    <div class="control-item">
+                        <label>
+                            Vibrance
+                            <span class="value-display" id="vibranceValue">0</span>
+                        </label>
+                        <input type="range" name="vibrance" min="-100" max="100" value="0" 
+                               oninput="updateFilter(this, '')">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Artistic Filters</h3>
+                    
+                    <div class="control-item">
+                        <label>
+                            Blur
+                            <span class="value-display" id="blurValue">0px</span>
+                        </label>
+                        <input type="range" name="blur" min="0" max="20" step="0.1" value="0" 
+                               oninput="updateFilter(this, 'px')">
+                    </div>
+
+                    <div class="control-item">
+                        <label>
+                            Grayscale
+                            <span class="value-display" id="grayscaleValue">0%</span>
+                        </label>
+                        <input type="range" name="grayscale" min="0" max="100" value="0" 
+                               oninput="updateFilter(this, '%')">
+                    </div>
+
+                    <div class="control-item">
+                        <label>
+                            Sepia
+                            <span class="value-display" id="sepiaValue">0%</span>
+                        </label>
+                        <input type="range" name="sepia" min="0" max="100" value="0" 
+                               oninput="updateFilter(this, '%')">
+                    </div>
+
+                    <div class="control-item">
+                        <label>
+                            Invert
+                            <span class="value-display" id="invertValue">0%</span>
+                        </label>
+                        <input type="range" name="invert" min="0" max="100" value="0" 
+                               oninput="updateFilter(this, '%')">
+                    </div>
+
+                    <div class="control-item">
+                        <label>
+                            Opacity
+                            <span class="value-display" id="opacityValue">100%</span>
+                        </label>
+                        <input type="range" name="opacity" min="0" max="100" value="100" 
+                               oninput="updateFilter(this, '%')">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Filter History</h3>
+                    <div id="historyPanel" class="history-panel">
+                        <div class="history-item" onclick="loadHistoryState(0)">
+                            <span>Original</span>
+                            <small>Default</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div>Processing image...</div>
+    </div>
+
+    <script>
+        class AdvancedImageEditor {
+            constructor() {
+                this.image = document.getElementById('mainImage');
+                this.imageContainer = document.getElementById('imageContainer');
+                this.filters = {
+                    brightness: 100,
+                    contrast: 100,
+                    saturate: 100,
+                    exposure: 0,
+                    hue: 0,
+                    temperature: 0,
+                    tint: 0,
+                    vibrance: 0,
+                    blur: 0,
+                    grayscale: 0,
+                    sepia: 0,
+                    invert: 0,
+                    opacity: 100
+                };
+                this.originalImage = null;
+                this.history = [{ ...this.filters }];
+                this.currentHistoryIndex = 0;
+                this.presets = JSON.parse(localStorage.getItem('imageFilterPresets') || '{}');
+                this.comparing = false;
+                
+                this.init();
+            }
+
+            init() {
+                document.getElementById('imageInput').addEventListener('change', (e) => this.handleImageUpload(e));
+                this.updateProgressBar(0);
+            }
+
+            handleImageUpload(event) {
+                const files = event.target.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    this.showLoading(true);
+                    
+                    // Update image info
+                    this.updateImageInfo(file);
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.image.src = e.target.result;
+                        this.originalImage = e.target.result;
+                        this.resetFilters();
+                        this.showLoading(false);
+                        this.updateProgressBar(100);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            updateImageInfo(file) {
+                const img = new Image();
+                img.onload = () => {
+                    document.getElementById('imageDimensions').textContent = `${img.width} × ${img.height}`;
+                };
+                img.src = URL.createObjectURL(file);
+                
+                document.getElementById('imageSize').textContent = this.formatFileSize(file.size);
+                document.getElementById('imageFormat').textContent = file.type.split('/')[1].toUpperCase();
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            showLoading(show) {
+                document.getElementById('loading').style.display = show ? 'block' : 'none';
+            }
+
+            updateProgressBar(percentage) {
+                document.getElementById('progressFill').style.width = percentage + '%';
+            }
+
+            updateFilter(element, unit) {
+                const value = parseFloat(element.value);
+                this.filters[element.name] = value;
+                
+                // Update display value
+                const displayElement = document.getElementById(element.name + 'Value');
+                if (displayElement) {
+                    displayElement.textContent = value + unit;
+                }
+                
+                this.applyFilters();
+                this.addToHistory();
+            }
+
+            applyFilters() {
+                const filterString = `
+                    brightness(${this.filters.brightness}%)
+                    contrast(${this.filters.contrast}%)
+                    saturate(${this.filters.saturate}%)
+                    hue-rotate(${this.filters.hue}deg)
+                    blur(${this.filters.blur}px)
+                    grayscale(${this.filters.grayscale}%)
+                    sepia(${this.filters.sepia}%)
+                    invert(${this.filters.invert}%)
+                    opacity(${this.filters.opacity}%)
+                `;
+                
+                this.image.style.filter = filterString.replace(/\s+/g, ' ').trim();
+                
+                // Apply additional effects
+                this.applyTemperatureAndTint();
+                this.applyExposure();
+                this.applyVibrance();
+            }
+
+            applyTemperatureAndTint() {
+                // Simulate temperature and tint using CSS filters and overlays
+                const temp = this.filters.temperature;
+                const tint = this.filters.tint;
+                
+                let overlayColor = '';
+                if (temp > 0) {
+                    overlayColor = `rgba(255, 200, 150, ${temp / 300})`;
+                } else if (temp < 0) {
+                    overlayColor = `rgba(150, 200, 255, ${Math.abs(temp) / 300})`;
+                }
+                
+                // Apply via pseudo-element styling would be more complex
+                // This is a simplified approach
+            }
+
+            applyExposure() {
+                const exposure = this.filters.exposure;
+                if (exposure !== 0) {
+                    const brightness = 100 + (exposure * 2);
+                    this.image.style.filter += ` brightness(${brightness}%)`;
+                }
+            }
+
+            applyVibrance() {
+                const vibrance = this.filters.vibrance;
+                if (vibrance !== 0) {
+                    const saturation = 100 + vibrance;
+                    this.image.style.filter += ` saturate(${saturation}%)`;
+                }
+            }
+
+            applyPreset(presetName) {
+                const presets = {
+                    vintage: { brightness: 110, contrast: 120, saturate: 80, sepia: 30, blur: 0.5 },
+                    noir: { brightness: 90, contrast: 150, saturate: 0, grayscale: 100 },
+                    warm: { brightness: 105, contrast: 110, saturate: 120, temperature: 20 },
+                    cool: { brightness: 95, contrast: 105, saturate: 110, temperature: -20 },
+                    dramatic: { brightness: 85, contrast: 180, saturate: 130, blur: 0 },
+                    soft: { brightness: 115, contrast: 85, saturate: 90, blur: 2 }
+                };
+
+                if (presets[presetName]) {
+                    Object.assign(this.filters, presets[presetName]);
+                    this.updateAllControls();
+                    this.applyFilters();
+                    this.addToHistory();
+                }
+            }
+
+            updateAllControls() {
+                for (const [key, value] of Object.entries(this.filters)) {
+                    const control = document.querySelector(`input[name="${key}"]`);
+                    if (control) {
+                        control.value = value;
+                        
+                        // Update display
+                        const unit = this.getUnit(key);
+                        const displayElement = document.getElementById(key + 'Value');
+                        if (displayElement) {
+                            displayElement.textContent = value + unit;
+                        }
+                    }
+                }
+            }
+
+            getUnit(filterName) {
+                const units = {
+                    brightness: '%', contrast: '%', saturate: '%', hue: '°',
+                    blur: 'px', grayscale: '%', sepia: '%', invert: '%', opacity: '%',
+                    exposure: '', temperature: '', tint: '', vibrance: ''
+                };
+                return units[filterName] || '';
+            }
+
+            resetFilters() {
+                this.filters = {
+                    brightness: 100, contrast: 100, saturate: 100, exposure: 0,
+                    hue: 0, temperature: 0, tint: 0, vibrance: 0,
+                    blur: 0, grayscale: 0, sepia: 0, invert: 0, opacity: 100
+                };
+                
+                this.updateAllControls();
+                this.applyFilters();
+                this.history = [{ ...this.filters }];
+                this.currentHistoryIndex = 0;
+                this.updateHistoryPanel();
+            }
+
+            addToHistory() {
+                if (this.currentHistoryIndex < this.history.length - 1) {
+                    this.history = this.history.slice(0, this.currentHistoryIndex + 1);
+                }
+                
+                this.history.push({ ...this.filters });
+                this.currentHistoryIndex = this.history.length - 1;
+                
+                if (this.history.length > 20) {
+                    this.history = this.history.slice(-20);
+                    this.currentHistoryIndex = 19;
+                }
+                
+                this.updateHistoryPanel();
+            }
+
+            updateHistoryPanel() {
+                const panel = document.getElementById('historyPanel');
+                panel.innerHTML = '';
+                
+                this.history.forEach((state, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    if (index === this.currentHistoryIndex) {
+                        item.style.background = '#e5e7eb';
+                    }
+                    
+                    item.innerHTML = `
+                        <span>Step ${index}</span>
+                        <small>${index === 0 ? 'Original' : 'Modified'}</small>
+                    `;
+                    
+                    item.onclick = () => this.loadHistoryState(index);
+                    panel.appendChild(item);
+                });
+            }
+
+            loadHistoryState(index) {
+                if (index >= 0 && index < this.history.length) {
+                    this.filters = { ...this.history[index] };
+                    this.currentHistoryIndex = index;
+                    this.updateAllControls();
+                    this.applyFilters();
+                    this.updateHistoryPanel();
+                }
+            }
+
+            toggleComparison() {
+                this.comparing = !this.comparing;
+                if (this.comparing && this.originalImage) {
+                    this.image.src = this.originalImage;
+                    this.image.style.filter = 'none';
+                } else {
+                    this.applyFilters();
+                }
+            }
+
+            savePreset() {
+                const name = prompt('Enter preset name:');
+                if (name) {
+                    this.presets[name] = { ...this.filters };
+                    localStorage.setItem('imageFilterPresets', JSON.stringify(this.presets));
+                    alert('Preset saved successfully!');
+                }
+            }
+
+            downloadImage(format) {
+                if (!this.originalImage) {
+                    alert('Please upload an image first');
+                    return;
+                }
+
+                this.showLoading(true);
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = this.image.naturalWidth || 1920;
+                canvas.height = this.image.naturalHeight || 1080;
+                
+                // Apply filters to canvas context
+                ctx.filter = this.image.style.filter;
+                ctx.drawImage(this.image, 0, 0, canvas.width, canvas.height);
+                
+                const link = document.createElement('a');
+                link.download = `filtered-image-${Date.now()}.${format}`;
+                link.href = canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : 1);
+                link.click();
+                
+                this.showLoading(false);
+            }
+        }
+
+        // Initialize the editor
+        const editor = new AdvancedImageEditor();
+
+        // Global functions for backward compatibility
+        function updateFilter(element, unit) {
+            editor.updateFilter(element, unit);
+        }
+
+        function applyPreset(name) {
+            editor.applyPreset(name);
+        }
+
+        function resetFilters() {
+            editor.resetFilters();
+        }
+
+        function downloadImage(format) {
+            editor.downloadImage(format);
+        }
+
+        function toggleComparison() {
+            editor.toggleComparison();
+        }
+
+        function savePreset() {
+            editor.savePreset();
+        }
+
+        function loadHistoryState(index) {
+            editor.loadHistoryState(index);
+        }
+    </script>
 </body>
-
 </html>
